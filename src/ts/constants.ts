@@ -1,0 +1,7 @@
+export enum RepeatState {
+  REPEAT_NONE,
+  REPEAT_ALL,
+  REPEAT_ONE,
+  REPEAT_RANDOM,
+  REPEAT_ALL_NUM
+}
