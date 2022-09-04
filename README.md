@@ -4,7 +4,9 @@ youtube-custom-music-playerはYouTubeの歌枠等配信を音楽プレーヤー�
 
 ## 使い方
 Releasesよりzipファイルをダウンロードし、解凍後data配下のファイルをサンプルデータに倣い編集してください。
-- config.jsonはサイト名を記載したJSON形式の設定ファイルです。
+- config.jsonはJSON形式の設定ファイルです。
+    - siteNameはサイト名の文字列です。
+    - userPlayListはユーザ作成リストの機能有無を切り替えます。デフォルトは無効(false)です。同一ドメインで複数のサイトがある場合、リストは共有されます。
 - song_list.csvは配信情報、および歌の情報を記載したCSV形式のデータファイルです。
 
 いずれも編集時はUTF-8を文字コードとして編集してください。

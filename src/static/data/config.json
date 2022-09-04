@@ -1,1 +1,4 @@
-{ "siteName" : "YouTube Custom Music Player" }
+{
+  "siteName" : "YouTube Custom Music Player",
+  "userPlayList" : false
+}

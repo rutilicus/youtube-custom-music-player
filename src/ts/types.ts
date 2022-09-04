@@ -15,6 +15,11 @@ export type IdSongData = SongData & {
   id: number;
 };
 
+export type NamedSongList = {
+  name: string;
+  songList: IdSongData[];
+};
+
 export type CsvData = Omit<SongData, "movie" | "time"> & Omit<Movie, "name"> & {
   startTime: number;
   movieName: string;

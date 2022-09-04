@@ -1,4 +1,4 @@
-import { IdSongData, CsvData } from "./types"
+import { IdSongData, NamedSongList, CsvData } from "./types"
 import { YTPlayer } from "./ytplayer"
 import { SongList } from "./songlist"
 import { ControlBar } from "./controlbar"
@@ -11,13 +11,14 @@ interface SongAppProps {
 
 }
 interface SongAppState {
-  songList?: IdSongData[];
+  songListList?: NamedSongList[];
+  currentListIndex?: number;
   currentSong?: IdSongData;
   currentTime?: number;
   playerState?: number;
   isMuted?: boolean;
   repeatState?: RepeatState;
-  siteName?: string;
+  userPlayList?: boolean;
 }
 
 const SEEK_PREV_TIME_THRES = 5;
@@ -44,13 +45,31 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
     this.seekNextForce = this.seekNextForce.bind(this);
     this.seekPrev = this.seekPrev.bind(this);
     this.seekTime = this.seekTime.bind(this);
+    this.resetCurrentList = this.resetCurrentList.bind(this);
+    this.setListIndex = this.setListIndex.bind(this);
+    this.saveUserSongList = this.saveUserSongList.bind(this);
+    this.createList = this.createList.bind(this);
+    this.editCurrentListName = this.editCurrentListName.bind(this);
+    this.deleteCurrentList = this.deleteCurrentList.bind(this);
+    this.addSongToList = this.addSongToList.bind(this);
+    this.deleteSongFromList = this.deleteSongFromList.bind(this);
+    this.concatSongList = this.concatSongList.bind(this);
 
     this.state = {
-      songList: [],
+      songListList: [
+        {name: "", songList: []}
+      ],
+      currentListIndex: 0,
       repeatState: RepeatState.REPEAT_NONE,
       currentTime: -1,
-      isMuted: false
+      isMuted: false,
+      userPlayList: false
     };
+  }
+
+  saveUserSongList(list: NamedSongList[]) {
+    // 先頭は全曲一覧のため、Trimしたものを保存
+    localStorage.setItem("allSongList", JSON.stringify(list.slice(1)));
   }
 
   async componentDidMount(): Promise<void> {
@@ -73,12 +92,34 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
       });
     }
 
-    this.setState({songList: idSongList});
+    let songListList = [{
+      name: "全曲一覧",
+      songList: idSongList
+    }];
+
+    const userSongListJson = localStorage.getItem("allSongList");
+    if (typeof userSongListJson === "string") {
+      const parsed = JSON.parse(userSongListJson) as any[];
+      parsed.forEach((songList) => {
+        let typed = songList as NamedSongList;
+        // 普通に使っていればIDが枯渇することはないが、一応振り直す
+        for (let i = 0; i < typed.songList.length; i++) {
+          typed.songList[i].id = i;
+        }
+        songListList.push(typed);
+      });
+      // ID振り直しがあるため一度保存する
+      this.saveUserSongList(songListList);
+    }
+
+    this.setState({songListList: songListList});
 
     const configFetchRes = await fetch("./data/config.json");
-    const configData = await configFetchRes.json() as {siteName: string};
+    const configData = await configFetchRes.json() as {siteName: string, userPlayList: boolean};
     this.baseTitle = configData.siteName;
     document.title = configData.siteName;
+
+    this.setState({userPlayList: configData.userPlayList});
 
     return Promise.resolve();
   }
@@ -110,7 +151,7 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
   }
 
   setSongIndex(listIndex: number) {
-    const newSong = this.state.songList[listIndex];
+    const newSong = this.state.songListList[this.state.currentListIndex].songList[listIndex];
     this.setState({
       currentTime: -1,
       currentSong: newSong
@@ -149,10 +190,10 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
   }
 
   seekNext() {
-    const arrayIndex = this.state.songList.findIndex(
+    const arrayIndex = this.state.songListList[this.state.currentListIndex].songList.findIndex(
       (idSongData) => idSongData.id === this.state.currentSong.id
     );
-    const songNum = this.state.songList.length;
+    const songNum = this.state.songListList[this.state.currentListIndex].songList.length;
     if (arrayIndex != -1) {
       switch(this.state.repeatState) {
         case RepeatState.REPEAT_NONE:
@@ -182,12 +223,12 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
   }
 
   seekNextForce() {
-    const arrayIndex = this.state.songList.findIndex(
+    const arrayIndex = this.state.songListList[this.state.currentListIndex].songList.findIndex(
       (idSongData) => idSongData.id === this.state.currentSong.id
     );
     if (arrayIndex != -1) {
       if (this.state.repeatState === RepeatState.REPEAT_ONE) {
-        if (arrayIndex + 1 < this.state.songList.length) {
+        if (arrayIndex + 1 < this.state.songListList[this.state.currentListIndex].songList.length) {
           this.setSongIndex(arrayIndex + 1);
         }
       } else {
@@ -197,7 +238,7 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
   }
 
   seekPrev() {
-    const arrayIndex = this.state.songList.findIndex(
+    const arrayIndex = this.state.songListList[this.state.currentListIndex].songList.findIndex(
       (idSongData) => idSongData.id === this.state.currentSong.id
     );
     if (arrayIndex != -1) {
@@ -213,7 +254,68 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
     this.player.seekTo(time, true);
   }
 
+  resetCurrentList(list: IdSongData[]) {
+    let tmp = this.state.songListList.slice();
+    tmp[this.state.currentListIndex].songList = list;
+    this.setState({songListList: tmp});
+    if (this.state.currentListIndex != 0) {
+      this.saveUserSongList(tmp);
+    }
+  }
 
+  setListIndex(index: number) {
+    this.setState({currentListIndex: index});
+  }
+
+  createList(listName: string) {
+    let tmp = this.state.songListList.slice();
+    tmp.push({name: listName, songList: []});
+    this.setState({songListList: tmp});
+    this.saveUserSongList(tmp);
+  }
+
+  editCurrentListName(listName: string) {
+    let tmp = this.state.songListList.slice();
+    tmp[this.state.currentListIndex].name = listName;
+    this.setState({songListList: tmp});
+    this.saveUserSongList(tmp);
+  }
+
+  deleteCurrentList() {
+    let tmp = this.state.songListList.slice();
+    tmp.splice(this.state.currentListIndex, 1);
+    this.setState({
+      songListList: tmp,
+      currentListIndex: 0
+    });
+    this.saveUserSongList(tmp);
+  }
+
+  addSongToList(listIndex: number, newSong: IdSongData) {
+    let addElem = Object.assign({}, newSong);
+    addElem.movie = Object.assign({}, newSong.movie);
+    let tmp = this.state.songListList.slice();
+    addElem.id =
+      tmp[listIndex].songList.length ? 
+      Math.max(...tmp[listIndex].songList.map((e) => e.id)) + 1 :
+      0;
+    tmp[listIndex].songList.push(addElem);
+    this.setState({songListList: tmp});
+    this.saveUserSongList(tmp);
+  }
+
+  deleteSongFromList(songIndex: number) {
+    let tmp = this.state.songListList.slice();
+    tmp[this.state.currentListIndex].songList.splice(songIndex, 1);
+    this.setState({songListList: tmp});
+    this.saveUserSongList(tmp);
+  }
+
+  concatSongList(list: NamedSongList[]) {
+    let tmp = this.state.songListList.slice().concat(list);
+    this.setState({songListList: tmp});
+    this.saveUserSongList(tmp);
+  }
 
   render() {
     return (
@@ -225,8 +327,18 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
               setPlayerState={this.setPlayerState}
               startInterval={this.startInterval}/>
             <SongList
-              songList={this.state.songList}
-              setSongIndex={this.setSongIndex} />
+              songListList={this.state.songListList}
+              currentListIndex={this.state.currentListIndex}
+              userPlayList={this.state.userPlayList}
+              setSongIndex={this.setSongIndex}
+              resetCurrentList={this.resetCurrentList}
+              setListIndex={this.setListIndex}
+              createList={this.createList}
+              editCurrentListName={this.editCurrentListName}
+              deleteCurrentList={this.deleteCurrentList}
+              addSongToList={this.addSongToList}
+              deleteSongFromList={this.deleteSongFromList}
+              concatSongList={this.concatSongList}/>
           </div>
           <ControlBar
             currentSong={this.state.currentSong}

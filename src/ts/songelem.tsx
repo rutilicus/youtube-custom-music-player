@@ -4,7 +4,9 @@ import { SongData } from "./types"
 interface SongElemProps {
   songData: SongData
   index: number;
+  userPlayList?: boolean;
   onItemClickListener(index: number): void;
+  onMenuClickListener(index: number): void;
 }
 interface SongElemInterface {
 
@@ -15,12 +17,19 @@ export class SongElem extends React.Component<SongElemProps, SongElemInterface> 
     super(props);
 
     this.handleItemClick = this.handleItemClick.bind(this);
+    this.handleMenuClick = this.handleMenuClick.bind(this);
   }
  
   handleItemClick(e: React.MouseEvent<HTMLInputElement>) {
     e.preventDefault();
     e.stopPropagation();
     this.props.onItemClickListener(this.props.index);
+  }
+
+  handleMenuClick(e: React.MouseEvent<HTMLInputElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.props.onMenuClickListener(this.props.index);
   }
 
   render() {
@@ -37,6 +46,14 @@ export class SongElem extends React.Component<SongElemProps, SongElemInterface> 
             {this.props.songData.artist}
           </div>
         </div>
+        {
+          this.props.userPlayList &&
+          <span
+          className="songElemMenuButton"
+          onClick={this.handleMenuClick}>
+            ︙
+          </span>
+        }
       </div>
     );
   }
