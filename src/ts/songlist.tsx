@@ -25,6 +25,7 @@ interface SongListState {
   modalState?: ModalState;
   editListName?: string;
   addListIndex?: number;
+  isMenuExtendUpper?: boolean;
 }
 
 enum ModalState {
@@ -86,7 +87,22 @@ export class SongList extends React.Component<SongListProps, SongListState> {
       songMenuClickedIndex: 0,
       modalState: ModalState.MODAL_NONE,
       editListName: "",
-      addListIndex: 0
+      addListIndex: 0,
+      isMenuExtendUpper: false
+    }
+  }
+
+  componentDidUpdate() {
+    const menuElemList = document.getElementsByClassName("menuContent");
+    if (menuElemList.length != 0 && !this.state.isMenuExtendUpper) {
+      // isMenuExtendUpperが既にtrueの場合は無限ループの可能性が発生するので処理しない
+      const menuElem = menuElemList[0];
+      const listElem = document.getElementsByClassName("songList")[0];
+      if (menuElem.getBoundingClientRect().bottom
+          > listElem.getBoundingClientRect().bottom) {
+            // メニューがはみ出る場合は上方向に延ばすように変更する
+            this.setState({isMenuExtendUpper: true});
+      }
     }
   }
 
@@ -106,6 +122,7 @@ export class SongList extends React.Component<SongListProps, SongListState> {
     this.setState({
       songMenuClicked: true,
       songMenuClickedIndex: listIndex,
+      isMenuExtendUpper: false
     });
   }
 
@@ -331,7 +348,11 @@ export class SongList extends React.Component<SongListProps, SongListState> {
                     this.state.songMenuClicked &&
                     this.state.songMenuClickedIndex == index &&
                     <div
-                      className="menuContent songListElemMenu">
+                      className={
+                        "menuContent songListElemMenu "
+                        + (this.state.isMenuExtendUpper
+                        ? "songListElemMenuExpandToUpper"
+                        : "songListElemMenuExpandToLower")}>
                       <ul>
                         <li onClick={this.displayAddDialog}>リストに追加</li>
                         {this.props.currentListIndex == 0 &&

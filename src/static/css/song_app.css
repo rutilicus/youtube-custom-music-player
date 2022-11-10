@@ -204,8 +204,15 @@ main {
 .songListElemMenu {
   display: block;
   position: absolute;
-  top: 1rem;
   right: 1rem;
+}
+
+.songListElemMenuExpandToLower {
+  top: 1rem;
+}
+
+.songListElemMenuExpandToUpper {
+  bottom: 1rem;
 }
 
 .menuContent ul {
