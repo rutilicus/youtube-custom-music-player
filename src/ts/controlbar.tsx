@@ -16,6 +16,7 @@ interface ControlBarProps {
   seekPrev(): void;
   seekNext(): void;
   seekTime(time: number): void;
+  shareLink(data: SongData): void;
 }
 interface ControlBarState {
 
@@ -30,6 +31,7 @@ export class ControlBar extends React.Component<ControlBarProps, ControlBarState
     this.getTimeInfo = this.getTimeInfo.bind(this);
     this.getZeroPaddedNum = this.getZeroPaddedNum.bind(this);
     this.onSeekBarChange = this.onSeekBarChange.bind(this);
+    this.shareLink = this.shareLink.bind(this);
   }
 
   advanceRepeatState() {
@@ -54,6 +56,12 @@ export class ControlBar extends React.Component<ControlBarProps, ControlBarState
 
   onSeekBarChange(e: React.ChangeEvent<HTMLInputElement>) {
     this.props.seekTime(parseInt(e.target.value));
+  }
+
+  shareLink() {
+    if (this.props.currentSong) {
+      this.props.shareLink(this.props.currentSong);
+    }
   }
 
   render() {
@@ -135,6 +143,20 @@ export class ControlBar extends React.Component<ControlBarProps, ControlBarState
             </div>
           }
           <div className="controlIcons controlRight">
+            {
+              (navigator.canShare
+                && navigator.canShare({
+                  text: "dummy", 
+                  url: location.protocol
+                       + "//" 
+                       + location.host 
+                       + location.pathname})) &&
+              <span
+                className="material-icons"
+                onClick={this.shareLink}>
+                share
+              </span>
+            }
             {this.props.isMuted &&
               <span
                 className="material-icons"

@@ -1,5 +1,5 @@
 import React from "react";
-import { IdSongData, NamedSongList } from "./types"
+import { IdSongData, NamedSongList, SongData } from "./types"
 import { SongElem } from "./songelem"
 import { ReactSortable } from "react-sortablejs";
 import Modal from "react-modal";
@@ -17,7 +17,7 @@ interface SongListProps {
   addSongToList(listIndex: number, newSong: IdSongData): void;
   deleteSongFromList(songIndex: number): void;
   concatSongList(list: NamedSongList[]): void;
-  shareLink(songIndex: number): void;
+  shareLink(data: SongData): void;
 }
 interface SongListState {
   listMenuClicked?: boolean;
@@ -265,7 +265,9 @@ export class SongList extends React.Component<SongListProps, SongListState> {
   }
 
   shareLink() {
-    this.props.shareLink(this.state.songMenuClickedIndex);
+    this.props.shareLink(
+      this.props.songListList[this.props.currentListIndex].songList[this.state.songMenuClickedIndex]
+    );
   }
 
   render() {

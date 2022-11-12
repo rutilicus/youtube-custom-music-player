@@ -1,4 +1,4 @@
-import { IdSongData, NamedSongList, CsvData } from "./types"
+import { IdSongData, NamedSongList, CsvData, SongData } from "./types"
 import { YTPlayer } from "./ytplayer"
 import { SongList } from "./songlist"
 import { ControlBar } from "./controlbar"
@@ -348,16 +348,14 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
     this.saveUserSongList(tmp);
   }
 
-  shareLink(songIndex: number) {
-    const currentSong = 
-      this.state.songListList[this.state.currentListIndex].songList[songIndex];
+  shareLink(data: SongData) {
     const shareData = {
-      text: currentSong.songName + " - " + this.baseTitle,
+      text: data.songName + " - " + this.baseTitle,
       url: location.protocol
            + "//" 
            + location.host 
            + location.pathname
-           + "?id=" + currentSong.movie.movieId + currentSong.time
+           + "?id=" + data.movie.movieId + data.time
     };
     if (navigator.canShare && navigator.canShare(shareData)) {
       navigator.share(shareData).then(() => {});
@@ -402,7 +400,8 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
             advanceRepeatState={this.advanceRepeatState}
             seekPrev={this.seekPrev}
             seekNext={this.seekNextForce}
-            seekTime={this.seekTime}/>
+            seekTime={this.seekTime}
+            shareLink={this.shareLink}/>
         </main>
       </div>
     );

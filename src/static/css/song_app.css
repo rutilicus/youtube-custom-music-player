@@ -319,7 +319,7 @@ main {
   }
 
   .playSongInfo {
-    max-width: calc(100vw - 13rem);
+    max-width: calc(100vw - 16rem);
   }
 
   .timeInfo {
