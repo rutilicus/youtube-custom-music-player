@@ -47,7 +47,14 @@ export class SongElem extends React.Component<SongElemProps, SongElemInterface> 
           </div>
         </div>
         {
-          this.props.userPlayList &&
+          (this.props.userPlayList
+            || (navigator.canShare
+                && navigator.canShare({
+                  text: "dummy", 
+                  url: location.protocol
+                       + "//" 
+                       + location.host 
+                       + location.pathname}))) &&
           <span
           className="songElemMenuButton"
           onClick={this.handleMenuClick}>

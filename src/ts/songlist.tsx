@@ -17,6 +17,7 @@ interface SongListProps {
   addSongToList(listIndex: number, newSong: IdSongData): void;
   deleteSongFromList(songIndex: number): void;
   concatSongList(list: NamedSongList[]): void;
+  shareLink(songIndex: number): void;
 }
 interface SongListState {
   listMenuClicked?: boolean;
@@ -80,6 +81,7 @@ export class SongList extends React.Component<SongListProps, SongListState> {
     this.exportUserList = this.exportUserList.bind(this);
     this.importUserList = this.importUserList.bind(this);
     this.fireImport = this.fireImport.bind(this);
+    this.shareLink = this.shareLink.bind(this);
 
     this.state = {
       listMenuClicked: false,
@@ -262,6 +264,10 @@ export class SongList extends React.Component<SongListProps, SongListState> {
     document.getElementById("importFile").click();
   }
 
+  shareLink() {
+    this.props.shareLink(this.state.songMenuClickedIndex);
+  }
+
   render() {
     return(
       <div className="songList">
@@ -354,12 +360,29 @@ export class SongList extends React.Component<SongListProps, SongListState> {
                         ? "songListElemMenuExpandToUpper"
                         : "songListElemMenuExpandToLower")}>
                       <ul>
-                        <li onClick={this.displayAddDialog}>リストに追加</li>
-                        {this.props.currentListIndex == 0 &&
+                        {
+                          this.props.userPlayList &&
+                          <li onClick={this.displayAddDialog}>リストに追加</li>
+                        }
+                        {
+                          this.props.userPlayList &&
+                          this.props.currentListIndex == 0 &&
                           <li className="disable">削除</li>
                         }
-                        {this.props.currentListIndex != 0 &&
+                        {
+                          this.props.userPlayList &&
+                          this.props.currentListIndex != 0 &&
                           <li onClick={this.displayDeleteElemDialog}>削除</li>
+                        }
+                        {
+                          (navigator.canShare
+                            && navigator.canShare({
+                              text: "dummy", 
+                              url: location.protocol
+                                   + "//" 
+                                   + location.host 
+                                   + location.pathname})) &&
+                          <li onClick={this.shareLink}>共有</li>
                         }
                       </ul>
                     </div>

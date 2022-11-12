@@ -54,6 +54,7 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
     this.addSongToList = this.addSongToList.bind(this);
     this.deleteSongFromList = this.deleteSongFromList.bind(this);
     this.concatSongList = this.concatSongList.bind(this);
+    this.shareLink = this.shareLink.bind(this);
 
     this.state = {
       songListList: [
@@ -317,6 +318,22 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
     this.saveUserSongList(tmp);
   }
 
+  shareLink(songIndex: number) {
+    const currentSong = 
+      this.state.songListList[this.state.currentListIndex].songList[songIndex];
+    const shareData = {
+      text: currentSong.songName + " - " + this.baseTitle,
+      url: location.protocol
+           + "//" 
+           + location.host 
+           + location.pathname
+           + "?id=" + currentSong.movie.movieId + currentSong.time
+    };
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      navigator.share(shareData).then(() => {});
+    }
+  }
+
   render() {
     return (
       <div>
@@ -338,7 +355,8 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
               deleteCurrentList={this.deleteCurrentList}
               addSongToList={this.addSongToList}
               deleteSongFromList={this.deleteSongFromList}
-              concatSongList={this.concatSongList}/>
+              concatSongList={this.concatSongList}
+              shareLink={this.shareLink}/>
           </div>
           <ControlBar
             currentSong={this.state.currentSong}
