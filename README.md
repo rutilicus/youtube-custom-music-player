@@ -18,5 +18,8 @@ Releasesよりzipファイルをダウンロードし、解凍後data配下の�
 ## 注意事項
 本フレームワークのデータ取得はHTTPリクエストを介して行われるため、Webサーバ上にファイルを配置した場合のみ動作いたします。
 
+## デプロイ例
+[こちら](https://github.com/rutilicus/youtube-custom-music-player-example)を参照してください。
+
 ## その他
 本フレームワークは[uisetlist](https://github.com/rutilicus/uisetlist)をベースに作成されました。

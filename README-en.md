@@ -17,5 +17,8 @@ Then, deploy these files on the web server.
 ## Caution
 This framework uses HTTP requests for data, so this works only web server envirionment.
 
+## Example
+See [here](https://github.com/rutilicus/youtube-custom-music-player-example).
+
 ## Other
 This framework is based on [uisetlist](https://github.com/rutilicus/uisetlist).
