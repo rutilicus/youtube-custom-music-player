@@ -1,4 +1,6 @@
 {
   "siteName" : "YouTube Custom Music Player",
-  "userPlayList" : false
+  "userPlayList" : false,
+  "spreadsheetId": "[Your Google Spreadsheet Id]",
+  "apiKey": "[Your API Key]"
 }

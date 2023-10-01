@@ -1,11 +1,10 @@
-import { IdSongData, NamedSongList, CsvData, SongData } from "./types"
+import { IdSongData, NamedSongList, SongData, AppConfig, Spreadsheet, SpreadsheetValues } from "./types"
 import { YTPlayer } from "./ytplayer"
 import { SongList } from "./songlist"
 import { ControlBar } from "./controlbar"
 import { RepeatState } from "./constants"
 import React from "react"
 import ReactDOM from "react-dom"
-import { parse } from "csv-parse/sync"
 
 interface SongAppProps {
 
@@ -76,21 +75,77 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
   }
 
   async componentDidMount(): Promise<void> {
-    const csvFetchRes = await fetch("./data/song_list.csv");
-    const csvData = await csvFetchRes.text();
-    const records = parse(csvData, {columns: true}) as CsvData[];
-    let idSongList = [] as IdSongData[];
+    const configFetchRes = await fetch("./data/config.json");
+    const configData = await configFetchRes.json() as AppConfig;
 
-    for (let i = 0; i < records.length; i++) {
+    /* Get Data From Spreadsheet. */
+    const sheetFetchRes =
+      await fetch("https://sheets.googleapis.com/v4/spreadsheets/"
+                  + configData.spreadsheetId
+                  + "?key=" + configData.apiKey);
+    const sheetData = await sheetFetchRes.json() as Spreadsheet;
+    const valuesFetchRes = 
+      await fetch("https://sheets.googleapis.com/v4/spreadsheets/"
+                  + configData.spreadsheetId + "/values/"
+                  + sheetData.sheets[0].properties.title
+                  + "?key=" + configData.apiKey);
+    const values = await valuesFetchRes.json() as SpreadsheetValues;
+    if (values.values.length <= 0) {
+      /* Data Read Error. */
+      return;
+    }
+    let movieIdCol = -1;
+    let movieNameCol = -1;
+    let startTimeCol = -1;
+    let endTimeCol = -1;
+    let songNameCol = -1;
+    let artistCol = -1;
+    for (let i = 0; i < values.values[0].length; i++) {
+      switch (values.values[0][i]) {
+        case "movieId":
+          movieIdCol = i;
+          break;
+        case "movieName":
+          movieNameCol = i;
+          break;
+        case "startTime":
+          startTimeCol = i;
+          break;
+        case "endTime":
+          endTimeCol = i;
+          break;
+        case "songName":
+          songNameCol = i;
+          break;
+        case "artist":
+          artistCol = i;
+          break;
+      }
+    }
+    if (movieIdCol == -1 || movieNameCol == -1 || startTimeCol == -1
+        || endTimeCol == -1 || songNameCol == -1 || artistCol == -1) {
+      /* Illegal Data. */
+      return;
+    }
+    const maxUsedCol = Math.max(
+      movieIdCol, movieNameCol, startTimeCol, endTimeCol, songNameCol, artistCol
+    );
+    let curId = 0;
+    let idSongList = [] as IdSongData[];
+    for (let i = 1; i < values.values.length; i++) {
+      if (values.values[i].length < maxUsedCol) {
+        /* Not Filled All Data. */
+        continue;
+      }
       idSongList.push({
-        id: i,
-        time: records[i].startTime,
-        endTime: records[i].endTime,
-        songName: records[i].songName,
-        artist: records[i].artist,
+        id: curId++,
+        time: parseInt(values.values[i][startTimeCol]),
+        endTime: parseInt(values.values[i][endTimeCol]),
+        songName: values.values[i][songNameCol],
+        artist: values.values[i][artistCol],
         movie: {
-          movieId: records[i].movieId,
-          name: records[i].movieName
+          movieId: values.values[i][movieIdCol],
+          name: values.values[i][movieNameCol]
         }
       });
     }
@@ -117,8 +172,6 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
 
     this.setState({songListList: songListList});
 
-    const configFetchRes = await fetch("./data/config.json");
-    const configData = await configFetchRes.json() as {siteName: string, userPlayList: boolean};
     this.baseTitle = configData.siteName;
     document.title = configData.siteName;
 

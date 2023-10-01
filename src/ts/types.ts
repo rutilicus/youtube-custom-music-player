@@ -20,7 +20,17 @@ export type NamedSongList = {
   songList: IdSongData[];
 };
 
-export type CsvData = Omit<SongData, "movie" | "time"> & Omit<Movie, "name"> & {
-  startTime: number;
-  movieName: string;
+export type AppConfig = {
+  siteName: string;
+  userPlayList: boolean;
+  spreadsheetId: string;
+  apiKey: string;
 };
+
+export type Spreadsheet = {
+  sheets: {properties: {title: string}}[];
+};
+
+export type SpreadsheetValues = {
+  values: [][];
+}
