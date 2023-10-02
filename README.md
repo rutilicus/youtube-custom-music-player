@@ -1,4 +1,4 @@
-[English version is here.](https://github.com/rutilicus/youtube-custom-music-player/blob/main/README-en.md)
+[English version is here.](https://github.com/rutilicus/youtube-custom-music-player/blob/V1xx/README-en.md)
 
 # youtube-custom-music-player
 youtube-custom-music-playerはYouTubeの歌枠等配信を音楽プレーヤー風にまとめるフレームワークです。
