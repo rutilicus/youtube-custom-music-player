@@ -2,6 +2,10 @@
 youtube-custom-music-player is a framework for creating music player like interface of songs sang in singing (karaoke) streamings.
 This framework has only static resources, so you can deploy it to static sites.
 
+## Difference from Version1
+Version2 gets data from Google spreadsheet. This makes it easy to co-edit the data.
+But, the settings are difficult than [Version1](https://github.com/rutilicus/youtube-custom-music-player/tree/V1xx). Consider using the [Version1](https://github.com/rutilicus/youtube-custom-music-player/tree/V1xx).
+
 ## How to use
 Download a zip file from Releases.
 And edit config.json in data directory.
