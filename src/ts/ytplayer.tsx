@@ -2,7 +2,7 @@ import React from "react"
 
 interface YTPlayerProps {
   setPlayerInstance(player: YT.Player): void;
-  setPlayerState(state: number): void;
+  onPlayerStateChange(state: number): void;
   startInterval(): void;
   onPlyaerReady(): void;
 }
@@ -48,7 +48,7 @@ export class YTPlayer extends React.Component<YTPlayerProps, YTPlayerState> {
   }
 
   onPlayerStateChange(event) {
-    this.props.setPlayerState(event.data);
+    this.props.onPlayerStateChange(event.data);
   }
 
   onPlayerReady(event) {
