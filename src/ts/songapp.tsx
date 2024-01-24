@@ -19,9 +19,12 @@ interface SongAppState {
   isMuted?: boolean;
   repeatState?: RepeatState;
   userPlayList?: boolean;
+  isVideoLoading?: VideoLoadingState;
 }
 
 const SEEK_PREV_TIME_THRES = 5;
+const VIDEO_LOAD_TIME_EPS = 3;
+type VideoLoadingState = "None" | "Loading" | "Seeking";
 
 class SongApp extends React.Component<SongAppProps, SongAppState> {
   player: YT.Player;
@@ -34,7 +37,7 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
 
     this.setPlayerInstance = this.setPlayerInstance.bind(this);
     this.setSongIndex = this.setSongIndex.bind(this);
-    this.setPlayerState = this.setPlayerState.bind(this);
+    this.onPlayerStateChange = this.onPlayerStateChange.bind(this);
     this.playVideo = this.playVideo.bind(this);
     this.pauseVideo = this.pauseVideo.bind(this);
     this.getPlayerState = this.getPlayerState.bind(this);
@@ -66,7 +69,8 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
       repeatState: RepeatState.REPEAT_NONE,
       currentTime: -1,
       isMuted: false,
-      userPlayList: false
+      userPlayList: false,
+      isVideoLoading: "None"
     };
   }
 
@@ -151,10 +155,17 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
     this.player = player;
   }
 
-  setPlayerState(state) {
+  onPlayerStateChange(state) {
     this.setState({
       playerState: state
     });
+    if (this.player && this.state.currentSong
+        && state == YT.PlayerState.PLAYING
+        && this.state.isVideoLoading == "Loading") {
+      // 動画読み込み後は現在の曲の開始位置にシークさせる
+      this.player.seekTo(this.state.currentSong.time, true);
+      this.setState({isVideoLoading: "Seeking"});
+    }
   }
 
   playVideo() {
@@ -175,15 +186,27 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
 
   setSongIndex(listIndex: number) {
     const newSong = this.state.songListList[this.state.currentListIndex].songList[listIndex];
+    const isSameMovie =
+      this.state.currentSong
+      && this.state.currentSong.movie.movieId == newSong.movie.movieId;
     this.setState({
       currentTime: -1,
       currentSong: newSong
     });
     if (this.player && this.player.loadVideoById) {
-      this.player.loadVideoById({
-        videoId: newSong.movie.movieId,
-        startSeconds: newSong.time
-      });  
+      // loadVideoByIdのstartSeconds引数が意図しない動作となるため、
+      // 同じ動画中はseekToで移動
+      // 異なる動画の場合は動画読み込み後にseekToで移動させる
+      if (isSameMovie && this.player.seekTo) {
+        this.player.seekTo(newSong.time, true);
+        this.setState({isVideoLoading: "Seeking"});
+      } else {
+        this.player.loadVideoById({
+          videoId: newSong.movie.movieId,
+          startSeconds: newSong.time
+        });
+        this.setState({isVideoLoading: "Loading"});
+      }
     }
 
     document.title = newSong.songName + " - " + this.baseTitle;
@@ -196,8 +219,19 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
         currentTime: currentTime,
         isMuted: this.player.isMuted && this.player.isMuted()
       });
-      if (this.state.currentSong) {
-        if (currentTime >= this.state.currentSong.endTime) {
+      if (this.state.currentSong
+          && this.state.playerState == YT.PlayerState.PLAYING) {
+        if (this.state.isVideoLoading == "Seeking") {
+          // タイミングによってはシークされていない場合があるため、
+          // その場合は現時間と開始時間を比較して再度シーク指示を出す
+          const timeDiff = currentTime - this.state.currentSong.time;
+          if (0 <= timeDiff && timeDiff <= VIDEO_LOAD_TIME_EPS) {
+            this.setState({isVideoLoading: "None"});
+          } else {
+            this.player.seekTo(this.state.currentSong.time, true);
+          }
+        } else if (this.state.isVideoLoading == "None"
+                   && currentTime >= this.state.currentSong.endTime) {
           this.seekNext();
         }
       }
@@ -369,7 +403,7 @@ class SongApp extends React.Component<SongAppProps, SongAppState> {
           <div className="playerMain">
             <YTPlayer
               setPlayerInstance={this.setPlayerInstance}
-              setPlayerState={this.setPlayerState}
+              onPlayerStateChange={this.onPlayerStateChange}
               startInterval={this.startInterval}
               onPlyaerReady={this.onPlayerReady}/>
             <SongList
